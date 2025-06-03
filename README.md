@@ -53,9 +53,6 @@ brew install python
 ---
 
 ### ✅ 2. Install Dependencies
-
-## ✅ Recommended Fix: Use a Virtual Environmeny
-Install the required Python package: 
 🛠️ Create a Virtual Environment
 ```bash
 python3 -m venv venv
