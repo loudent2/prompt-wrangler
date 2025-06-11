@@ -53,7 +53,6 @@ brew install python
 ---
 
 ### ✅ 2. Create a Virtual Environment
-
 ```bash
 python3 -m venv venv
 source venv/bin/activate
@@ -125,7 +124,7 @@ python wrangler.py notes/sample.txt --system-prompt prompts/default.txt --temper
 - **Flat Schema**: Keeps the output clean and easy to work with downstream (e.g., storing in DynamoDB, piping into ETL).
 - **Selective Output**: Fields like `"SpO2"` or `"compliance_status"` are only included if explicitly mentioned — no nulls.
 - **Domain Awareness**: Prompt encourages correct placement of adjectives (e.g. “portable” → `components`, “elevating leg rests” → `features`).
-- 🧼 **Input Sanitation**: Trims whitespace, normalizes spacing, validates minimum input length
+- **Input Sanitation**: Trims whitespace, normalizes spacing, validates minimum input length
 
 ---
 
