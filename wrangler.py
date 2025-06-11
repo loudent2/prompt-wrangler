@@ -53,9 +53,17 @@ def call_ai(api_key, user_prompt, system_prompt, model, temperature, max_tokens)
             {"role": "user", "content": user_prompt.strip()}
         ]
     }
-    start = time.time()
-    response = requests.post(API_URL, headers=headers, json=data)
-    elapsed = time.time() - start
+    try:
+        start = time.time()
+        response = requests.post(API_URL, headers=headers, json=data)
+        elapsed = time.time() - start
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        logger.error(f"HTTP {response.status_code}: {response.text}")
+        exit(1)
+    except Exception as e:
+        logger.error(f"Unhandled error: {e}")
+        exit(1)    
 
     #Output
     try:
