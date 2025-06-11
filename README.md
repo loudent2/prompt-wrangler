@@ -52,19 +52,14 @@ brew install python
 
 ---
 
-### ✅ 2. Install Dependencies
+### ✅ 2. Create a Virtual Environment
 
-## ✅ Recommended Fix: Use a Virtual Environmeny
-Install the required Python package: 
-🛠️ Create a Virtual Environment
 ```bash
 python3 -m venv venv
-```
-⚡ Activate the Virtual Environment
-```bash
 source venv/bin/activate
 ```
-Install reqests
+
+Then install the dependency:
 
 ```bash
 pip install requests
@@ -86,17 +81,16 @@ export OPENROUTER_API_KEY=sk-or-xxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 ## 🧪 How to Run
 
-You can run the tool by passing input directly:
+### Run from CLI with direct input:
 
 ```bash
 python wrangler.py "Patient requires a full face CPAP mask with humidifier due to AHI > 20. Ordered by Dr. Cameron."
 ```
 
-Or run it interactively:
+### Run with arguments (optional):
 
 ```bash
-python wrangler.py
-# Then paste the input when prompted
+python wrangler.py notes/sample.txt --system-prompt prompts/default.txt --temperature 0.4 --model mistralai/mistral-7b-instruct
 ```
 
 ---
@@ -126,19 +120,14 @@ python wrangler.py
 ## 🔬 How It Works
 
 ### 🧠 Prompt
-The script sends a fixed system prompt that instructs the LLM how to extract and label clinical data. The prompt includes:
-- Explicit field definitions
-- A rule: *no nulls, only include mentioned fields*
-- Adjective handling rules for `features` vs `components`
+The script sends a default or user-specified system prompt to guide the LLM. Prompts can be swapped using `--system-prompt prompts/strict_json.txt`.
 
 ### 📤 OpenRouter API Call
-The script uses `requests.post()` to send a chat-style prompt to the LLM endpoint, and measures response time + token usage.
+Uses `requests.post()` to submit the chat request and logs timing + token metrics.
 
 ---
 
 ## ✅ Example Inputs
-
-Try these:
 
 ```bash
 python wrangler.py "Patient has MS with significant mobility issues. Recommended a lightweight manual wheelchair with elevating leg rests. Ordered by Dr. Taub."
@@ -163,9 +152,22 @@ python wrangler.py "Asthma diagnosis confirmed. Prescribing nebulizer with mouth
 
 ---
 
-## 🧪 Tests (Optional Extension)
+## ✅ Tests
 
-Tests can be added using `unittest` and mocking `requests.post` to simulate LLM responses. For now, the script is kept minimal to focus on core functionality.
+Run unit tests (mocked LLM responses) with:
+
+```bash
+python -m unittest discover tests/
+```
+
+---
+
+## 🧠 With More Time...
+
+- Add session history or run saving
+- Build a Streamlit-based prompt playground
+- Implement schema validation or error correction
+- Add a “How to improve this prompt” LLM feedback feature
 
 ---
 
@@ -174,5 +176,3 @@ Tests can be added using `unittest` and mocking `requests.post` to simulate LLM 
 - AI engineers tuning prompts for healthcare workflows
 - DME teams needing lightweight tooling for document parsing
 - Developers integrating LLM-based preprocessing into pipelines
-
-<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
