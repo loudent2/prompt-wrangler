@@ -4,17 +4,15 @@ import json
 import os
 import time
 import sys
+import argparse
+import logging
 
-
-API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+# Defaults and configuration
+DEFAULT_MODEL = "mistralai/mistral-7b-instruct"
+DEFAULT_TEMPERATURE = 0.3
+DEFAULT_MAX_TOKENS = 512 
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
-# These value are hard coded for now but should be optional parameters
-MODEL = "mistralai/mistral-7b-instruct"
-TEMPERATURE = 0.3 
-MAX_TOKENS = 512 
-
-# This is the system prompt. It can be tweaked to change the behavior of the AI model.
-SYSTEM_PROMPT = (
+DEFAULT_SYSTEM_PROMPT = (
     "You are an expert assistant extracting structured JSON from medical equipment order notes.\n\n"
     "🧾 Rules:\n"
     "- Your output must be a flat JSON object.\n"
@@ -36,48 +34,81 @@ SYSTEM_PROMPT = (
 )
 
 
-# Read user prompt
-if len(sys.argv) > 1:
-    user_prompt = sys.argv[1]
-else:
-    user_prompt = input("📝 Paste the equipment order note:\n> ")
+# -----------------------------
+# Send request to AI
+# -----------------------------
+def call_ai(api_key, user_prompt, system_prompt, model, temperature, max_tokens):
 
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
 
-# Send request
-headers = {
-    "Authorization": f"Bearer {API_KEY}",
-    "Content-Type": "application/json"
-}
+    data = {
+        "model": model,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt.strip()}
+        ]
+    }
+    start = time.time()
+    response = requests.post(API_URL, headers=headers, json=data)
+    elapsed = time.time() - start
 
-data = {
-    "model": MODEL,
-    "temperature": TEMPERATURE,
-    "max_tokens": MAX_TOKENS,
-    "messages": [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": user_prompt.strip()}
-    ]
-}
+    #Output
+    try:
+        result = response.json()
+        content = result['choices'][0]['message']['content']
+        usage = result.get('usage', {})
 
-print("\n⏳ Processing...\n")
-start = time.time()
-response = requests.post(API_URL, headers=headers, json=data)
-elapsed = time.time() - start
+        return {
+            "output": content,
+            "elapsed": elapsed,
+            "tokens": usage
+        }
+    except Exception as e:
+        logger.error("Failed to parse response")
+        logger.error(response.text)
+        raise
 
-# Output
-try:
-    result = response.json()
-    content = result['choices'][0]['message']['content']
-    usage = result.get('usage', {})
+def main():
+    parser = argparse.ArgumentParser(description="Send clinical note to LLM for structured output")
+    parser.add_argument("note", help="Input clinical note or path to file")
+    parser.add_argument("--system-prompt", help="System prompt to LLM")
+    parser.add_argument("--model", default=DEFAULT_MODEL)
+    parser.add_argument("--temperature", type=float, default=DEFAULT_TEMPERATURE)
+    parser.add_argument("--max_tokens", type=int, default=DEFAULT_MAX_TOKENS)
+    parser.add_argument("--api-key", help="API key or set OPENROUTER_API_KEY")
 
-    print("📤 JSON Output:\n")
-    print(content)
+    args = parser.parse_args()
 
+    api_key = args.api_key or os.getenv("OPENROUTER_API_KEY")
+    if not api_key:
+        logger.error("API key missing. Provide via --api-key or OPENROUTER_API_KEY env var.")
+        exit(1)
+
+    if os.path.exists(args.note):
+        with open(args.note, "r") as f:
+            user_prompt = f.read()
+    else:
+        user_prompt = args.note
+    
+    if not user_prompt.strip():
+        logger.error("Input note is empty. Provide a valid clinical note.")
+        exit(1)
+    
+    system_prompt = args.system_prompt or DEFAULT_SYSTEM_PROMPT
+    result = call_ai(api_key, user_prompt, system_prompt, args.model, args.temperature, args.max_tokens)
+
+    print("\n📤 JSON Output:\n")
+    print(result["output"])
     print("\n📊 Usage:")
-    print(f"⏱️ Response Time: {elapsed:.2f}s")
-    print(f"🔢 Prompt Tokens: {usage.get('prompt_tokens', 'N/A')}")
-    print(f"🧠 Total Tokens: {usage.get('total_tokens', 'N/A')}")
+    print(f"⏱️ Response Time: {result['elapsed']:.2f}s")
+    print(f"🔢 Prompt Tokens: {result['tokens'].get('prompt_tokens', 'N/A')}")
+    print(f"🧠 Total Tokens: {result['tokens'].get('total_tokens', 'N/A')}")
 
-except Exception as e:
-    print("❌ Error:", e)
-    print(response.text)
+if __name__ == "__main__":
+    main()
+
