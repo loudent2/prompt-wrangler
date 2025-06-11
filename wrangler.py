@@ -33,6 +33,19 @@ DEFAULT_SYSTEM_PROMPT = (
     "Do not infer values. Do not include fields if they are not present in the input."
 )
 
+# Load system prompt from file or use default
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+logger = logging.getLogger(__name__)
+
+def load_system_prompt(path=None):
+    if path:
+        try:
+            with open(path, "r") as f:
+                return f.read()
+        except Exception as e:
+            logger.error(f"Could not read system prompt from '{path}': {e}")
+            exit(1)
+    return DEFAULT_SYSTEM_PROMPT
 
 # -----------------------------
 # Send request to AI
@@ -84,7 +97,7 @@ def call_ai(api_key, user_prompt, system_prompt, model, temperature, max_tokens)
 def main():
     parser = argparse.ArgumentParser(description="Send clinical note to LLM for structured output")
     parser.add_argument("note", help="Input clinical note or path to file")
-    parser.add_argument("--system-prompt", help="System prompt to LLM")
+    parser.add_argument("--system-prompt", help="Optional path to system prompt file")
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--temperature", type=float, default=DEFAULT_TEMPERATURE)
     parser.add_argument("--max_tokens", type=int, default=DEFAULT_MAX_TOKENS)
@@ -107,7 +120,7 @@ def main():
         logger.error("Input note is empty. Provide a valid clinical note.")
         exit(1)
     
-    system_prompt = args.system_prompt or DEFAULT_SYSTEM_PROMPT
+    system_prompt = load_system_prompt(args.system_prompt)
     result = call_ai(api_key, user_prompt, system_prompt, args.model, args.temperature, args.max_tokens)
 
     print("\n📤 JSON Output:\n")
