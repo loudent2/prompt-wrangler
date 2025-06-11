@@ -87,6 +87,17 @@ export OPENROUTER_API_KEY=sk-or-xxxxxxxxxxxxxxxxxxxxxxxxxxxx
 python wrangler.py "Patient requires a full face CPAP mask with humidifier due to AHI > 20. Ordered by Dr. Cameron."
 ```
 
+# OR from a file:
+```bash
+python wrangler.py notes/sample.txt
+```
+
+# OR via stdin:
+```bash
+cat notes/sample.txt | python wrangler.py
+```
+# OR interactively (no arguments):
+python wrangler.py
 ### Run with arguments (optional):
 
 ```bash
@@ -103,7 +114,7 @@ python wrangler.py notes/sample.txt --system-prompt prompts/default.txt --temper
 | 🤖 OpenRouter LLM API     | Uses models like `mistral-7b-instruct` via OpenRouter.                      |
 | 🔍 Rule-Based Extraction  | Applies logic for when to use `components` vs `features`.                   |
 | ⏱️ Metrics Reporting      | Shows total tokens and response time.                                       |
-| 🛠️ Input Flexibility      | Accepts CLI arguments or prompts interactively.                             |
+| 🛠️ Input Flexibility      | Accepts multi-line input via file, stdin, or interactive prompt.            |
 
 ---
 
@@ -114,6 +125,7 @@ python wrangler.py notes/sample.txt --system-prompt prompts/default.txt --temper
 - **Flat Schema**: Keeps the output clean and easy to work with downstream (e.g., storing in DynamoDB, piping into ETL).
 - **Selective Output**: Fields like `"SpO2"` or `"compliance_status"` are only included if explicitly mentioned — no nulls.
 - **Domain Awareness**: Prompt encourages correct placement of adjectives (e.g. “portable” → `components`, “elevating leg rests” → `features`).
+- 🧼 **Input Sanitation**: Trims whitespace, normalizes spacing, validates minimum input length
 
 ---
 
